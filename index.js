@@ -18,6 +18,11 @@ mongoose.connect(process.env.MONGO_URI, {useNewUrlParser: true, useUnifiedTopolo
 .then(() => console.log('MongoDB Connected'))
 .catch((error) => console.log('MongoDb Connection Failed', error))
 
+
+
+
+// ---------------------------User APIs--------------------------------
+
 const userSchema = new mongoose.Schema({
     username: {type: String, required: true, unique: true},
     password: {type: String, required: true}
@@ -26,7 +31,6 @@ const userSchema = new mongoose.Schema({
 const Users = mongoose.model('users', userSchema)
 
 app.post('/register', async (request, response) => {
-    console.log(request.body)
     const {username, password} = request.body
 
     const existinguser = await Users.findOne({username})
@@ -58,7 +62,7 @@ app.post('/login', async (request, response) => {
     }
     else{
         const passwordMatch = await bcrypt.compare(password, userInDatabase.password)
-        console.log(passwordMatch)
+
         if (passwordMatch)
         {
             const jwtToken = jwt.sign({username, password}, process.env.JWT_SECRET_KEY, {expiresIn: '1h'})
@@ -74,6 +78,64 @@ app.get('/', (request, response) => {
     response.send('hello')
 })
 
+
+
+
+// -----------------------------Admin APIs--------------------------------------
+
+const adminSchema = new mongoose.Schema({
+    admin_username: {type: String, required: true, unique: true},
+    admin_password: {type: String, required: true}
+})
+
+const AdminModel = mongoose.model('aminUsers', adminSchema)
+
+app.post('/register-admin', async (request, response) => {
+    const {admin_username, admin_password} = request.body
+
+    const adminInDatabase = await AdminModel.findOne({admin_username})
+
+    if (adminInDatabase)
+    {
+        return response.status(400).send({error:'Admin already exists'})
+    }
+    
+        const adminHashedPassword = await bcrypt.hash(admin_password, 10)
+
+        const newAdmin = new AdminModel({
+            admin_username,
+            admin_password: adminHashedPassword
+        })
+
+        await newAdmin.save()
+        return response.status(200).send({message: 'admin created successfully'})
+    
+})
+
+app.post('/login-admin', async (request, response) => {
+    const {admin_username,admin_password} = request.body
+
+    const adminInDatabase = await AdminModel.findOne({admin_username})
+
+    if (adminInDatabase)
+    {
+        const passwordMatch = await bcrypt.compare(admin_password, adminInDatabase.admin_password)
+        if (passwordMatch)
+        {
+            return response.status(200).send({message: 'Login successful'})
+        }
+        else{
+            return response.status(400).send({message: 'Invalid password'})
+        }
+    }
+    else{
+        return response.status(400).send(({message: 'Username Not exists'}))
+    }
+})
+
+
+
+// --------------------------------------END-------------------------------------------
 
 const PORT = process.env.PORT
 app.listen(PORT, () => {console.log(`Server Running at ${PORT}`)})
