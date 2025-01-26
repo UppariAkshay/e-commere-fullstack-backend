@@ -10,6 +10,7 @@ const bodyParser = require('body-parser')
 const Users = require('./models/Users')
 const Products = require('./models/Products')
 const AdminModel = require('./models/Admin')
+const Orders = require('./models/Orders')
 
 const app = express()
 app.use(cors())
@@ -157,6 +158,26 @@ app.get('/all-products', async (request, response) => {
     response.status(200).send(allProducts)
 })
 
+
+
+
+//------------------------------------Order APIs--------------------------------------------
+app.post('/place-order', async (request, response) => {
+    const {orderItems} = request.body
+
+    const newOrder = await new Orders({orderedProducts: orderItems.map(eachOrder => ({productName: eachOrder.productName, category: eachOrder.category
+    })) })
+
+    await newOrder.save()
+
+    response.status.send({message: 'Order placed successfully'})
+})
+
+app.get('/orders', async (request, response) => {
+    const ordersList = await Orders.find()
+
+    response.status(200).send(ordersList)
+})
 
 
 // --------------------------------------END-------------------------------------------
