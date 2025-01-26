@@ -7,6 +7,9 @@ const cors = require('cors')
 const jwt = require('jsonwebtoken')
 const bcrypt = require('bcrypt')
 const bodyParser = require('body-parser')
+const Users = require('./models/Users')
+const Products = require('./models/Products')
+const AdminModel = require('./models/Admin')
 
 const app = express()
 app.use(cors())
@@ -21,14 +24,8 @@ mongoose.connect(process.env.MONGO_URI, {useNewUrlParser: true, useUnifiedTopolo
 
 
 
-// ---------------------------User APIs--------------------------------
+// ---------------------------User APIs------------------------------------------------
 
-const userSchema = new mongoose.Schema({
-    username: {type: String, required: true, unique: true},
-    password: {type: String, required: true}
-})
-
-const Users = mongoose.model('users', userSchema)
 
 app.post('/register', async (request, response) => {
     const {username, password} = request.body
@@ -65,8 +62,8 @@ app.post('/login', async (request, response) => {
 
         if (passwordMatch)
         {
-            const jwtToken = jwt.sign({username, password}, process.env.JWT_SECRET_KEY, {expiresIn: '1h'})
-            response.status(200).send({error: 'Login Successful', jwtToken})
+            const jwtToken = jwt.sign({username}, process.env.JWT_SECRET_KEY, {expiresIn: '1h'})
+            response.status(200).send({userType: 'USER', jwtToken})
         }
         else{
             response.status(400).send({error: 'Password did not match'})
@@ -81,14 +78,8 @@ app.get('/', (request, response) => {
 
 
 
-// -----------------------------Admin APIs--------------------------------------
+// -----------------------------Admin APIs---------------------------------------------
 
-const adminSchema = new mongoose.Schema({
-    admin_username: {type: String, required: true, unique: true},
-    admin_password: {type: String, required: true}
-})
-
-const AdminModel = mongoose.model('aminUsers', adminSchema)
 
 app.post('/register-admin', async (request, response) => {
     const {admin_username, admin_password} = request.body
@@ -122,7 +113,9 @@ app.post('/login-admin', async (request, response) => {
         const passwordMatch = await bcrypt.compare(admin_password, adminInDatabase.admin_password)
         if (passwordMatch)
         {
-            return response.status(200).send({message: 'Login successful'})
+            const jwtToken = jwt.sign({admin_username}, process.env.JWT_SECRET_KEY, {expiresIn: '1h'})
+
+            return response.status(200).send({userType: 'ADMIN',jwtToken})
         }
         else{
             return response.status(400).send({message: 'Invalid password'})
@@ -131,6 +124,37 @@ app.post('/login-admin', async (request, response) => {
     else{
         return response.status(400).send(({message: 'Username Not exists'}))
     }
+})
+
+
+
+
+//------------------------------Products APIs-----------------------------------------------
+
+
+app.post('/add-new-product', async (request, response) => {
+    const {productName, category, buyed} = request.body
+
+    const newProduct = new Products({
+        productName,
+        category,
+        buyed,
+        sold: 0,
+        available: buyed
+    })
+
+    await newProduct.save()
+
+    const allProducts = await Products.find()
+
+    response.status(200).send(allProducts)
+
+})
+
+app.get('/all-products', async (request, response) => {
+    const allProducts = await Products.find()
+
+    response.status(200).send(allProducts)
 })
 
 
