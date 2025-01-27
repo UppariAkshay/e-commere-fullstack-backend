@@ -180,6 +180,14 @@ app.get('/orders', async (request, response) => {
 })
 
 
+
+//------------------------------------Users APIs--------------------------------------------
+
+app.get('/all-users', async (request, response) => {
+    const allUsers = await Users.find()
+
+    response.status(200).send(allUsers)
+})
 // --------------------------------------END-------------------------------------------
 
 const PORT = process.env.PORT
