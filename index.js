@@ -119,11 +119,11 @@ app.post('/login-admin', async (request, response) => {
             return response.status(200).send({userType: 'ADMIN',jwtToken})
         }
         else{
-            return response.status(400).send({message: 'Invalid password'})
+            return response.status(400).send({error: 'Invalid password'})
         }
     }
     else{
-        return response.status(400).send(({message: 'Username Not exists'}))
+        return response.status(400).send(({error: 'Username Not exists'}))
     }
 })
 
