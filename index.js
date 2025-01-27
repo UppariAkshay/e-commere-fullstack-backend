@@ -170,7 +170,7 @@ app.post('/place-order', async (request, response) => {
 
     await newOrder.save()
 
-    response.status.send({message: 'Order placed successfully'})
+    response.status(200).send({message: 'Order placed successfully'})
 })
 
 app.get('/orders', async (request, response) => {
